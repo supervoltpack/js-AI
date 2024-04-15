@@ -7,16 +7,16 @@ LNNs and the NCPs Library
  	1.1 Ordinary Differential Equations  
 	1.2 NCP General Research  
 	1.3 NCP Library Research  
-emsp	1.3.1 Simple LNN Project  
-emsp	1.3.2 Difference between CNNs, ViTs, KNNs, etc.   
-emsp	1.3.3 Pros and Cons of LNNs   
+&emsp	1.3.1 Simple LNN Project  
+&emsp	1.3.2 Difference between CNNs, ViTs, KNNs, etc.   
+&emsp	1.3.3 Pros and Cons of LNNs   
 	1.4 Papers, articles, and general research   
   
 2. TIME OF FLIGHT (ToF) -    
-emsp2.1    
+&emsp 2.1    
   
 3. IMAGE CAPTIONING -    
-emsp3.1    
+&emsp 3.1    
   
 4. CAMERA-LIDAR FUSION -    
-emsp4.1    
+&emsp 4.1    
