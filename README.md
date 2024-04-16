@@ -9,8 +9,8 @@ LNNs and the NCPs Library
 	1.3 NCP Library Research
 &emsp;	1.3.1 Simple LNN Project  
 &emsp;	1.3.2 Difference between CNNs, ViTs, KNNs, etc.   
-&emsp;	1.3.3 Pros and Cons of LNNs
-&emsp;  1.3.4 CFC Program
+&emsp;	1.3.3 Pros and Cons of LNNs  
+&emsp;  1.3.4 CFC Program  
 	1.4 Papers, articles, and general research   
   
 3. TIME OF FLIGHT (ToF) -    
