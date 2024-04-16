@@ -6,7 +6,7 @@ LNNs and the NCPs Library
 1. LIQUID NEURAL NETWORKS -  
  	1.1 Ordinary Differential Equations  
 	1.2 NCP General Research  
-	1.3 NCP Library Research
+	1.3 NCP Library Research  
 &emsp;	1.3.1 Simple LNN Project  
 &emsp;	1.3.2 Difference between CNNs, ViTs, KNNs, etc.   
 &emsp;	1.3.3 Pros and Cons of LNNs  
