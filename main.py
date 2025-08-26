@@ -1,7 +1,6 @@
 import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as tfds
-from sklearn.model_selection import train_test_split
 import requests
 import os
 
@@ -64,22 +63,46 @@ y = tf.keras.utils.to_categorical([class_to_index[label] for label in labels], n
 
 X = images.astype("float32") / 255.0  # normalize
 
-# Train-test split
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Train-test split using TensorFlow
+def tf_train_test_split(X, y, test_size=0.2, random_state=42):
+    """TensorFlow implementation of train-test split"""
+    tf.random.set_seed(random_state)
+    n_samples = X.shape[0]
+    indices = tf.range(n_samples)
+    shuffled_indices = tf.random.shuffle(indices)
+    
+    test_size = int(n_samples * test_size)
+    test_indices = shuffled_indices[:test_size]
+    train_indices = shuffled_indices[test_size:]
+    
+    X_train = tf.gather(X, train_indices).numpy()
+    X_test = tf.gather(X, test_indices).numpy()
+    y_train = tf.gather(y, train_indices).numpy()
+    y_test = tf.gather(y, test_indices).numpy()
+    
+    return X_train, X_test, y_train, y_test
+
+X_train, X_test, y_train, y_test = tf_train_test_split(X, y, test_size=0.2, random_state=42)
 
 # ==================== CNN Model =====================
 cnn_model = tf.keras.Sequential([
     tf.keras.Input(shape=X_train.shape[1:]),
+    
     tf.keras.layers.Conv2D(32, (3, 3), activation='relu', padding="same"),
     tf.keras.layers.MaxPooling2D((2, 2)),
+    
     tf.keras.layers.Conv2D(16, (3, 3), activation='relu', padding="same"),
     tf.keras.layers.MaxPooling2D((2, 2)),
+
     tf.keras.layers.Conv2D(32, (3, 3), activation='relu', padding="same"),
     tf.keras.layers.MaxPooling2D((2, 2)),
+
     tf.keras.layers.Conv2D(16, (3, 3), activation='relu', padding="same"),
     tf.keras.layers.MaxPooling2D((2, 2)),
+
     tf.keras.layers.Conv2D(32, (3, 3), activation='relu', padding="same"),
     tf.keras.layers.MaxPooling2D((2, 2)),
+
     tf.keras.layers.Flatten(),
     tf.keras.layers.Dense(64, activation='relu'),
     tf.keras.layers.Dense(len(class_names), activation='softmax')
@@ -87,18 +110,67 @@ cnn_model = tf.keras.Sequential([
 
 cnn_model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
 
-# Data Augmentation (flip images vertically)
-X_train_augment = np.array([tf.image.flip_up_down(img).numpy() for img in X_train])
-y_train_augment = y_train
+# Data Augmentation - Multiple techniques
+print("Applying data augmentation...")
 
-X_train_final = np.concatenate((X_train, X_train_augment), axis=0)
-y_train_final = np.concatenate((y_train, y_train_augment), axis=0)
+# Convert to TensorFlow tensors for efficient augmentation
+X_train_tf = tf.convert_to_tensor(X_train)
+
+# 1. Vertical flips
+X_train_vert = tf.image.flip_up_down(X_train_tf).numpy()
+y_train_vert = y_train
+
+# 2. Horizontal flips
+X_train_horiz = tf.image.flip_left_right(X_train_tf).numpy()
+y_train_horiz = y_train
+
+# 3. Random rotations (90°, 180°, 270°)
+def apply_random_rotations(images):
+    rotated_images = []
+    for img in images:
+        k = tf.random.uniform(shape=[], minval=0, maxval=4, dtype=tf.int32)
+        rotated_images.append(tf.image.rot90(img, k=k).numpy())
+    return np.array(rotated_images)
+
+X_train_rotate = apply_random_rotations(X_train_tf)
+y_train_rotate = y_train
+
+# 4. Random brightness adjustments
+X_train_bright = tf.image.random_brightness(X_train_tf, max_delta=0.2).numpy()
+y_train_bright = y_train
+
+# 5. Random contrast adjustments
+X_train_contrast = tf.image.random_contrast(X_train_tf, lower=0.8, upper=1.2).numpy()
+y_train_contrast = y_train
+
+# Combine all augmented datasets
+X_train_final = np.concatenate([
+    X_train,           # Original
+    X_train_vert,      # Vertical flips
+    X_train_horiz,     # Horizontal flips  
+    X_train_rotate,    # Rotations
+    X_train_bright,    # Brightness
+    X_train_contrast   # Contrast
+], axis=0)
+
+y_train_final = np.concatenate([
+    y_train,
+    y_train_vert,
+    y_train_horiz,
+    y_train_rotate,
+    y_train_bright,
+    y_train_contrast
+], axis=0)
+
+print(f"Original training samples: {len(X_train)}")
+print(f"Augmented training samples: {len(X_train_final)}")
+print(f"Augmentation factor: {len(X_train_final)/len(X_train):.1f}x")
 
 # Train the model
 cnn_model.fit(X_train_final, y_train_final, epochs=35, validation_data=(X_test, y_test))
 
 # ==================== Image Prediction =====================
-image_path = "your_image.jpg"  # Replace with your image file path
+image_path = r"C:\Users\mithr_z9a5h10\COMPUTER SCIENCE\MFI Lab\histologyCNN\slide1.jpg"  
 
 # Load and preprocess the image with Keras utils
 input_image = tf.keras.utils.load_img(image_path, target_size=X_train.shape[1:3])
