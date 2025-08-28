@@ -19,40 +19,28 @@ def download_file(url, filename):
         raise Exception(f"Failed to download {filename}. Status code: {response.status_code}")
 
 # ================= Project and Dataset =====================
-project = "histology"  # Options: "beans", "malaria", "histology", "bees"
+project = "histology"  
 
 dataset_url_prefix_dict = {
     "histology": "https://storage.googleapis.com/inspirit-ai-data-bucket-1/Data/AI%20Scholars/Sessions%206%20-%2010%20(Projects)/Project%20-%20Towards%20Precision%20Medicine/",
-    "bees": "https://storage.googleapis.com/inspirit-ai-data-bucket-1/Data/AI%20Scholars/Sessions%206%20-%2010%20(Projects)/Project%20-%20Safeguarding%20Bee%20Health/"
 }
 
-if project == "beans":
-    data, info = tfds.load('beans', split='train[:1024]', as_supervised=True, with_info=True)
-    feature_dict = info.features['label'].names
-    images = np.array([tf.image.resize_with_pad(image, 128, 128).numpy() for image, _ in data])
-    labels = [feature_dict[int(label)] for _, label in data]
+# For histology datasets
+# Define file URLs
+image_url = f"{dataset_url_prefix_dict[project]}images.npy"
+labels_url = f"{dataset_url_prefix_dict[project]}labels.npy"
 
-elif project == "malaria":
-    data, info = tfds.load('malaria', split='train[:1024]', as_supervised=True, with_info=True)
-    images = np.array([tf.image.resize_with_pad(image, 256, 256).numpy() for image, _ in data])
-    labels = ['malaria' if label == 1 else 'healthy' for _, label in data]
+# Download files
+download_file(image_url, "images.npy")
+download_file(labels_url, "labels.npy")
 
-else:  # For histology and bees datasets
-    # Define file URLs
-    image_url = f"{dataset_url_prefix_dict[project]}images.npy"
-    labels_url = f"{dataset_url_prefix_dict[project]}labels.npy"
+# Load the downloaded data
+images = np.load("images.npy")
+labels = np.load("labels.npy")
 
-    # Download files
-    download_file(image_url, "images.npy")
-    download_file(labels_url, "labels.npy")
-
-    # Load the downloaded data
-    images = np.load("images.npy")
-    labels = np.load("labels.npy")
-
-    # Clean up: remove files after loading
-    os.remove("images.npy")
-    os.remove("labels.npy")
+# Clean up: remove files after loading
+os.remove("images.npy")
+os.remove("labels.npy")
 
 # ==================== Data Preprocessing ====================
 
@@ -63,7 +51,7 @@ y = tf.keras.utils.to_categorical([class_to_index[label] for label in labels], n
 
 X = images.astype("float32") / 255.0  # normalize
 
-# Train-test split using TensorFlow
+# Train-test split of the dataset
 def tf_train_test_split(X, y, test_size=0.2, random_state=42):
     """TensorFlow implementation of train-test split"""
     tf.random.set_seed(random_state)
@@ -88,6 +76,8 @@ X_train, X_test, y_train, y_test = tf_train_test_split(X, y, test_size=0.2, rand
 cnn_model = tf.keras.Sequential([
     tf.keras.Input(shape=X_train.shape[1:]),
     
+# Model Layerts
+
     tf.keras.layers.Conv2D(32, (3, 3), activation='relu', padding="same"),
     tf.keras.layers.MaxPooling2D((2, 2)),
     
@@ -110,8 +100,7 @@ cnn_model = tf.keras.Sequential([
 
 cnn_model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
 
-# Data Augmentation - Multiple techniques
-print("Applying data augmentation...")
+# Data Augmentation
 
 # Convert to TensorFlow tensors for efficient augmentation
 X_train_tf = tf.convert_to_tensor(X_train)
@@ -162,17 +151,19 @@ y_train_final = np.concatenate([
     y_train_contrast
 ], axis=0)
 
+# Augmenting makes the dataset 6.0x larger
+
 print(f"Original training samples: {len(X_train)}")
 print(f"Augmented training samples: {len(X_train_final)}")
 print(f"Augmentation factor: {len(X_train_final)/len(X_train):.1f}x")
 
-# Train the model
+# Train 
 cnn_model.fit(X_train_final, y_train_final, epochs=35, validation_data=(X_test, y_test))
 
 # ==================== Image Prediction =====================
-image_path = r"C:\Users\mithr_z9a5h10\COMPUTER SCIENCE\MFI Lab\histologyCNN\slide1.jpg"  
+image_path = r"C:\Users\mithr_z9a5h10\COMPUTER SCIENCE\MFI Lab\histologyCNN\slide4.jpg"  
 
-# Load and preprocess the image with Keras utils
+# Load and preprocess 
 input_image = tf.keras.utils.load_img(image_path, target_size=X_train.shape[1:3])
 input_image = tf.keras.utils.img_to_array(input_image) / 255.0
 input_image = np.expand_dims(input_image, axis=0)
