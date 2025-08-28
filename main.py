@@ -161,7 +161,7 @@ print(f"Augmentation factor: {len(X_train_final)/len(X_train):.1f}x")
 cnn_model.fit(X_train_final, y_train_final, epochs=35, validation_data=(X_test, y_test))
 
 # ==================== Image Prediction =====================
-image_path = r"C:\Users\mithr_z9a5h10\COMPUTER SCIENCE\MFI Lab\histologyCNN\slide4.jpg"  
+image_path = r"C:\Users\mithr_z9a5h10\COMPUTER SCIENCE\MFI Lab\histologyCNN\wholeslidestesting\slide4.jpg"  
 
 # Load and preprocess 
 input_image = tf.keras.utils.load_img(image_path, target_size=X_train.shape[1:3])
